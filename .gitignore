@@ -1,0 +1,77 @@
+# My files
+requirements and resources/
+.vscode/
+.venv/
+.env
+t.py
+error.txt
+cookies/
+.pytest_cache/
+*.exe
+*.zip
+
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pycache
+__pycache__/
+
+# pyright
+.pyrightconfig.json
+
+# rope
+.ropeproject
+
+# mypy
+.mypy_cache/
+
+# autopep8
+*.py.orig
+.pycachef/
+
+# template databases
+*.sqlite3
+
+# wxGlade
+*.wxg
+
+# PyInstaller
+dist/
