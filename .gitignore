@@ -4,12 +4,14 @@ requirements and resources/
 .venv/
 .env
 t.py
-error.txt
+error.log
 cookies/
 .pytest_cache/
 *.exe
 *.zip
-
+client.txt
+sa-test.json
+tmp/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

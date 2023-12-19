@@ -1,34 +1,56 @@
 import traceback
-from dotenv import load_dotenv
 import time
-import os
+from collections import Counter
 
-
-from modules.scraper import Scraper
-from modules import files as fs
-
-load_dotenv()
-
+from modules.settings import Settings
+from modules.depop import Depop
+from modules.poshmark import Poshmark   
+from modules.ebay import Ebay
+from modules.gsheet import GoogleSheet
 
 def main():
     start_time = time.time()
+    settings = Settings()
     
-    d = Scraper()
     try:
-        if d.setup_driver(headless=False, profile = os.getenv('chrome_profile')):
-            d.get_page('https://www.google.com/')
-            d.element_send_keys('Who is lionel messi?', selector='textarea[name="q"]')
-            
-            print('Chrome is ready')
+        sold_items = []
         
+        # Depop
+        depop = Depop()
+        if depop.login(settings.depop_username, settings.depop_password):
+            sold_items += depop.get_sold_items()
+        del depop
         
-            input('Exit? Press ENTER: ')
+        # Poshmark
+        poshmark = Poshmark()
+        if poshmark.login(settings.poshmark_username, settings.poshmark_password):
+            sold_items += poshmark.get_sold_items()
+        del poshmark
+        
+        # Ebay
+        ebay = Ebay()
+        if ebay.login(settings.ebay_username, settings.ebay_password):
+            sold_items += ebay.get_sold_items()
+        del ebay
+
+        print('\nTotal sold items: {}'.format(len(sold_items)))
+        [print('{}: {}'.format(key, value)) for key, value in Counter([item.get('platform') for item in sold_items]).items()]
+        
+        # Google Sheet
+        gsheet = GoogleSheet(service_account='sa-test.json')
+        gsheet.update_sold_items('INVENTORY/SALES (2023)', 'LISTINGS', sold_items)
+        del gsheet
+        
+        # [print(item) for item in sold_items]
+        
+        # input('\nPress any key to exit...')
     except Exception:
-        traceback.print_exc()
+        print('Unexpected error occurred. Please see "error.log" for more details.')
+        with open('error.log', 'w') as f:
+            f.write(traceback.format_exc())
     finally:
         print('\nExecution time: {} min'.format(
             round((time.time() - start_time)/60, 2)))
-        del d
 
         
 

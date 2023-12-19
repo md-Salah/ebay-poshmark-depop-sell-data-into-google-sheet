@@ -10,7 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, InvalidArgumentException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, InvalidArgumentException, ElementClickInterceptedException
 from selenium.webdriver.chrome.service import Service
 
 from selenium.webdriver.common.keys import Keys
@@ -24,8 +24,8 @@ import traceback
 
 
 class Scraper:
-	cookie_file:Optional[str]='cookies/cookies.pkl'
-	error_file:str='error.txt'
+	cookie_file:str='cookies/cookies.pkl'
+	error_file:str='error.log'
 
 	def __init__(self):
 		pass
@@ -99,7 +99,7 @@ class Scraper:
 			if print_error:
 				print('InvalidArgumentException, bad url: "{}"'.format(url))
 		except Exception:
-			traceback.print_exc()
+			self.unhandled_exception()
 
 		return None
 
@@ -117,15 +117,15 @@ class Scraper:
 			if print_error:
 				print('{}: url: "{}"'.format(err.__class__, url))
 		except Exception:
-			traceback.print_exc()
+			self.unhandled_exception()
 
 		return None
    
-	def try_auto_login(self, is_logged_in_selector:str) -> bool:
+	def login_with_cookies(self, is_logged_in_selector:str) -> bool:
 
 		# Check if already logged in
 		if self.is_logged_in(is_logged_in_selector, timeout=3):
-			print('Auto logged in')
+			print('Already logged in')
 			return True
   
 		# Load cookies if available
@@ -185,7 +185,8 @@ class Scraper:
 			return False
 
 
-	def save_cookies(self, filename:str='cookies/cookies.pkl') -> None:
+	def save_cookies(self, filename:str='') -> None:
+		filename = filename or self.cookie_file
 		try:
 			if not os.path.exists(filename.split('/')[0]):
 				os.mkdir(filename.split('/')[0])
@@ -193,7 +194,7 @@ class Scraper:
 			with open(filename, 'wb') as file:
 				pickle.dump(self.driver.get_cookies(), file)
 		except Exception:
-			traceback.print_exc()
+			self.unhandled_exception()
 
 
 	def is_logged_in(self, selector:str, timeout:float=15) -> bool:
@@ -214,11 +215,11 @@ class Scraper:
 				print('TimeoutException, selector: "{}", timeout: {} sec'.format(selector, timeout))
 		except Exception:
 			if print_error:
-				traceback.print_exc()			
+				self.unhandled_exception()			
 
 		# If click is True
 		if click and element:
-			element.click()
+			self.element_click(element)
 
 		return element
 	
@@ -231,7 +232,7 @@ class Scraper:
 			elements = driver.find_elements(By.CSS_SELECTOR, selector)
 		except Exception:
 			if print_error:
-				traceback.print_exc()
+				self.unhandled_exception()
 		
 		return elements
 
@@ -241,13 +242,13 @@ class Scraper:
 			element = self.driver.find_element(By.XPATH, "//{}[contains(text(),'{}')]".format(tag, text))
 		except NoSuchElementException:
 			if print_error:
-				print('NoSuchElementException, text: {} + {}'.format(tag, text))
+				print('NoSuchElementException, find element by visible text "{}", tag "{}"'.format(text, tag))
 		except Exception:
 			if print_error:
-				traceback.print_exc()
+				self.unhandled_exception()
  	
 		if click and element:
-			element.click()
+			self.element_click(element)
    
 		return element
 
@@ -277,11 +278,28 @@ class Scraper:
      
 				return True			
 			except Exception:
-				traceback.print_exc()
+				self.unhandled_exception()
 		
 		return False
+
+	def element_click(self, element:WebElement) -> bool:
+		try:
+			element.click()
+			return True
+		except ElementClickInterceptedException:
+			return self.element_click_js(element)
+		except Exception:
+			self.unhandled_exception()
+			return False
   
-	
+	def element_click_js(self, element:WebElement) -> bool:
+		try:
+			self.driver.execute_script("arguments[0].click();", element)
+			return True
+		except Exception:
+			self.unhandled_exception()
+			return False
+ 
 	def select_dropdown(self, selector:str, value:str='', text:str='', timeout:float=15) -> bool:
 		element= self.find_element(selector, timeout=timeout, print_error=True)
 		if element:
@@ -311,19 +329,15 @@ class Scraper:
 			return True
 		return False
 
-	def scroll_into_view(self, selector:str='', element=None, timeout:int=15) -> None:
-		if element:
-			pass
-		elif selector:
-			element = self.find_element(selector, timeout=timeout, print_error=True)
-		else:
-			print('Please provide a selector or WebElement to scroll into view')
-   
-   
-		if element:
-			self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'auto',block: 'center',inline: 'center'});", element)
-	
+	def scroll_into_view(self, element: WebElement) -> bool:
+		if not element:
+			print('Failed to scroll into view, element is None')
+			return False
+		
+		self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'auto',block: 'center',inline: 'center'});", element)
+		return True		
 
+ 
 	def upload_files(self, selector:str, files:Union[str, list[str]], timeout:float=15) -> bool:
 		element = self.find_element(selector, timeout=timeout, print_error=True)
 		if element:
@@ -333,7 +347,7 @@ class Scraper:
 			except InvalidArgumentException:
 				print('InvalidArgumentException, Check files path are correct. selector: "{}", files: "{}"'.format(selector, files))
 			except Exception:
-				traceback.print_exc()
+				self.unhandled_exception()
 
 		return False
 
@@ -346,8 +360,7 @@ class Scraper:
 			if print_error:
 				print('TimeoutException, selector: "{}", timeout: {} sec'.format(selector, timeout))
 		except Exception:
-			if print_error:
-				traceback.print_exc()
+			self.unhandled_exception()
 		return False
 
 	def open_new_tab(self, url:str, tab_index:int=1) -> bool:
@@ -356,7 +369,7 @@ class Scraper:
 			self.driver.switch_to.window(self.driver.window_handles[tab_index])
 			return True
 		except Exception:
-			traceback.print_exc()
+			self.unhandled_exception()
 			return False
   
 	def switch_to_tab(self, tab_index:int, close_current_tab:bool=False) -> None:
@@ -424,7 +437,7 @@ class Scraper:
 		);
 		""" % (PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASS)
 
-		if os.path.exists('tmp'):
+		if not os.path.exists('tmp'):
 			os.mkdir('tmp')
 		pluginfile = 'tmp/proxy_auth_plugin.zip'
 
@@ -433,3 +446,10 @@ class Scraper:
 			zp.writestr("background.js", background_js)
 		
 		return pluginfile
+
+
+	def unhandled_exception(self):
+		print('Unexpected error occurred. Please see "{}" for more details.'.format(self.error_file))
+		with open(self.error_file, 'w') as file:
+			file.write(traceback.format_exc())
+   

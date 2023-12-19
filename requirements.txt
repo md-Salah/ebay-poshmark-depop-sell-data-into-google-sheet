@@ -1,5 +1,4 @@
 selenium
-tqdm
 pandas
 python-dotenv
 bs4
