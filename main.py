@@ -16,19 +16,19 @@ def main():
         sold_items = []
         
         # Depop
-        depop = Depop()
+        depop = Depop(profile=settings.profile)
         if depop.login(settings.depop_username, settings.depop_password):
             sold_items += depop.get_sold_items()
         del depop
         
         # Poshmark
-        poshmark = Poshmark()
+        poshmark = Poshmark(profile=settings.profile)
         if poshmark.login(settings.poshmark_username, settings.poshmark_password):
             sold_items += poshmark.get_sold_items()
         del poshmark
         
         # Ebay
-        ebay = Ebay()
+        ebay = Ebay(profile=settings.profile)
         if ebay.login(settings.ebay_username, settings.ebay_password):
             sold_items += ebay.get_sold_items()
         del ebay
@@ -37,11 +37,13 @@ def main():
         [print('{}: {}'.format(key, value)) for key, value in Counter([item.get('platform') for item in sold_items]).items()]
         
         # Google Sheet
-        gsheet = GoogleSheet(service_account='sa-test.json')
+        print('\nUpdating Google Sheet...')
+        gsheet = GoogleSheet(service_account=settings.service_account) # type: ignore
         gsheet.update_sold_items('INVENTORY/SALES (2023)', 'LISTINGS', sold_items)
         del gsheet
         
-        # [print(item) for item in sold_items]
+        print('')
+        [print(item) for item in sold_items]
         
         # input('\nPress any key to exit...')
     except Exception:

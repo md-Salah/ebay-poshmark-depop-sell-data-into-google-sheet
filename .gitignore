@@ -11,7 +11,11 @@ cookies/
 *.zip
 client.txt
 sa-test.json
+gsheet_credentials.json
 tmp/
+profile
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

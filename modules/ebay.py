@@ -1,21 +1,23 @@
 from bs4 import BeautifulSoup
 import re
+from typing import Optional
+from datetime import datetime
 
 from modules.scraper import Scraper
 
 class Ebay:
-    def __init__(self, headless=False, proxy=None) -> None:
+    def __init__(self, headless=False, proxy=None, profile:Optional[str]='') -> None:
         print('Ebay:')
         
         # Setup Chrome driver
         self.se = Scraper()
-        self.driver = self.se.setup_driver(headless=headless, proxy=proxy)       
+        self.driver = self.se.setup_driver(headless=headless, proxy=proxy, profile=profile)       
         if not self.driver:
             print('Unable to open chrome driver')
             exit()
             
         # Setup cookies
-        self.se.cookie_file = 'cookies/ebay_cookies.pkl'
+        self.cookie_file = 'cookies/ebay_cookies.pkl'
         
     
     def login(self, ebay_username, ebay_password):
@@ -24,7 +26,7 @@ class Ebay:
         # Login Page
         self.se.get_page('https://www.ebay.com/')
         
-        is_success = self.se.login_with_cookies(is_logged_in_selector)
+        is_success = self.se.login_with_cookies(is_logged_in_selector, self.cookie_file)
         if is_success:
             return True
 
@@ -39,7 +41,7 @@ class Ebay:
         input('Please login to Ebay and press ENTER:')
         if self.se.is_logged_in(is_logged_in_selector, timeout=5):
             print('Login success')
-            self.se.save_cookies()
+            self.se.save_cookies(self.cookie_file)
             return True
         
         return False    
@@ -82,6 +84,7 @@ class Ebay:
             for div in date_divs:
                 if 'Date sold' in div.text:
                     date = div.text.replace('Date sold', '').strip()
+                    date = datetime.strptime(date, '%b %d, %Y').strftime('%Y-%m-%d')  # Dec 21, 2023
                     break
             
             # Order Earning

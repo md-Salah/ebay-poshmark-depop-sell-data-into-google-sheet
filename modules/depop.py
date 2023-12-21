@@ -1,21 +1,23 @@
 from bs4 import BeautifulSoup
 import re
+from typing import Optional
+from datetime import datetime
 
 from modules.scraper import Scraper
 
 class Depop:
-    def __init__(self, headless=False) -> None:
+    def __init__(self, headless=False, profile:Optional[str]='') -> None:
         print('Depop:')
         
         # Setup Chrome driver
         self.se = Scraper()
-        self.driver = self.se.setup_driver(headless=headless)       
+        self.driver = self.se.setup_driver(headless=headless, profile=profile)       
         if not self.driver:
             print('Unable to open chrome driver')
             exit()
             
         # Setup cookies
-        self.se.cookie_file = 'cookies/depop_cookies.pkl'
+        self.cookie_file = 'cookies/depop_cookies.pkl'
         
     
     def login(self, depop_username, depop_password):
@@ -25,7 +27,7 @@ class Depop:
         # Login
         self.se.get_page('https://www.depop.com/login/')
         
-        is_success = self.se.login_with_cookies(is_logged_in_selector)
+        is_success = self.se.login_with_cookies(is_logged_in_selector, self.cookie_file)
         if is_success:
             return True
         
@@ -38,7 +40,8 @@ class Depop:
             username_selector='#username',
             password_selector='#password',
             submit_selector= 'button[data-testid="login__cta"]',
-            is_logged_in_selector=is_logged_in_selector
+            is_logged_in_selector=is_logged_in_selector,
+            cookie_file=self.cookie_file
         )
         
     def get_sold_items(self):
@@ -86,7 +89,9 @@ class Depop:
             
             # Order Date
             date_p = aside.select_one('section div p[type="caption1"]')
-            date = date_p.text.replace('Sold on', '').strip() if date_p else ''
+            assert date_p is not None
+            date = date_p.text.replace('Sold on', '').strip()
+            date = datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d')
             
             # Payment State
             payment_state = aside.select_one('div[class*="PaymentState"] p')

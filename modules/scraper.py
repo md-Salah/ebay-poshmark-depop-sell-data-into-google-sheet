@@ -24,7 +24,6 @@ import traceback
 
 
 class Scraper:
-	cookie_file:str='cookies/cookies.pkl'
 	error_file:str='error.log'
 
 	def __init__(self):
@@ -41,7 +40,7 @@ class Scraper:
 
 		
 	# Setup driver with best practice options
-	def setup_driver(self, headless:bool=True, profile:Optional[str]=None, proxy: Optional[str]=None) -> Optional[webdriver.Chrome]:
+	def setup_driver(self, headless:bool=True, profile:Optional[str]=None, proxy: Optional[str]=None) -> webdriver.Chrome:
 		options = Options()
 		service = Service()
   
@@ -84,7 +83,7 @@ class Scraper:
 			print(f'Failed to setup browser. Check if another chrome is open with same profile. See "{self.error_file}" for more info.')
 			with open(self.error_file, 'a') as file:
 				traceback.print_exc(file=file)
-			return None
+			exit()
             
 	def wait_random_time(self, a:float=0.20, b:float=1.20) -> None:
 		time.sleep(round(random.uniform(a, b), 2))
@@ -121,22 +120,22 @@ class Scraper:
 
 		return None
    
-	def login_with_cookies(self, is_logged_in_selector:str) -> bool:
+	def login_with_cookies(self, is_logged_in_selector:str, cookie_file:str, timeout:float=5) -> bool:
 
 		# Check if already logged in
-		if self.is_logged_in(is_logged_in_selector, timeout=3):
+		if self.is_logged_in(is_logged_in_selector, timeout=timeout):
 			print('Already logged in')
 			return True
   
 		# Load cookies if available
-		if self.cookie_file and self.load_cookies(self.cookie_file, False) and self.is_logged_in(is_logged_in_selector, timeout=5):
+		if self.load_cookies(cookie_file) and self.is_logged_in(is_logged_in_selector, timeout=timeout):
 			print('Logged In using cookies')
 			return True
 
 		return False
 
    
-	def fill_login_form(self, username:str, password:str, username_selector:str, password_selector:str, submit_selector:str, is_logged_in_selector:str) -> bool:
+	def fill_login_form(self, username:str, password:str, username_selector:str, password_selector:str, submit_selector:str, is_logged_in_selector:str, cookie_file:Optional[str]=None) -> bool:
 	
 		print('User {} is logging in...'.format(username))
  		# Fill username and password
@@ -156,8 +155,8 @@ class Scraper:
 		# Chcek if logged in
 		self.wait_random_time(2, 3)
 		if self.is_logged_in(is_logged_in_selector, timeout=30):
-			if self.cookie_file:
-				self.save_cookies(self.cookie_file)
+			if cookie_file:
+				self.save_cookies(cookie_file)
 				print('Login success and Cookies are saved.')
 			else:
 				print('Login success.')
@@ -168,9 +167,9 @@ class Scraper:
 		return False
 
 
-	def load_cookies(self, filename:str='cookies/cookies.pkl', print_error:bool=True) -> bool:
-		if os.path.exists(filename):
-			with open(filename, 'rb') as file:
+	def load_cookies(self, cookie_file:str) -> bool:
+		if os.path.exists(cookie_file):
+			with open(cookie_file, 'rb') as file:
 				cookies = pickle.load(file)
 				
 				for cookie in cookies:
@@ -180,22 +179,18 @@ class Scraper:
 			self.wait_random_time(2, 3)
 			return True
 		else:
-			if print_error:
-				print('Cookies file not found, filename: "{}"'.format(filename))
+			print('Cookies file not found, filename: "{}"'.format(cookie_file))
 			return False
-
-
-	def save_cookies(self, filename:str='') -> None:
-		filename = filename or self.cookie_file
+			
+	def save_cookies(self, cookie_file:str) -> None:
 		try:
-			if not os.path.exists(filename.split('/')[0]):
-				os.mkdir(filename.split('/')[0])
+			if not os.path.exists(cookie_file.split('/')[0]):
+				os.mkdir(cookie_file.split('/')[0])
 
-			with open(filename, 'wb') as file:
+			with open(cookie_file, 'wb') as file:
 				pickle.dump(self.driver.get_cookies(), file)
 		except Exception:
 			self.unhandled_exception()
-
 
 	def is_logged_in(self, selector:str, timeout:float=15) -> bool:
 		element = self.find_element(selector, timeout=timeout, print_error=False)
@@ -253,7 +248,7 @@ class Scraper:
 		return element
 
  
-	def element_send_keys(self, text:str, selector:str='', element:Optional[WebElement]=None, gap:Optional[float]=0.01, timeout:float=15) -> bool:
+	def element_send_keys(self, text:str, selector:Optional[str]=None, element:Optional[WebElement]=None, gap:Optional[float]=0.01, timeout:float=15) -> bool:
 		
 		if len(text) == 0:
 			raise ValueError('Please provide a text to send keys')
@@ -450,6 +445,7 @@ class Scraper:
 
 	def unhandled_exception(self):
 		print('Unexpected error occurred. Please see "{}" for more details.'.format(self.error_file))
-		with open(self.error_file, 'w') as file:
+		with open(self.error_file, 'a') as file:
+			file.write('\n')
 			file.write(traceback.format_exc())
    
