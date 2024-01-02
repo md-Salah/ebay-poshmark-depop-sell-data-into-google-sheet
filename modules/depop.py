@@ -74,7 +74,7 @@ class Depop:
         try:
             # Shipping State
             shipping_status = self.se.find_element('div[data-testid="receipt__shipping_status"]')
-            assert shipping_status is not None
+            assert shipping_status is not None, 'Shipping status not found'
             if shipping_status.text != 'Awaiting shipping':
                 return []
             
@@ -89,7 +89,7 @@ class Depop:
             
             # Order Date
             date_p = aside.select_one('section div p[type="caption1"]')
-            assert date_p is not None
+            assert date_p is not None, 'Date not found'
             date = date_p.text.replace('Sold on', '').strip()
             date = datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d')
             
@@ -113,7 +113,7 @@ class Depop:
             for product in products:
                 name = product.text.split('\n')[0].replace('Name:', '').strip()
                 item_codes = re.findall(r'\d{6}', name)
-                assert len(item_codes) > 0
+                assert len(item_codes) > 0, 'Item code not found'
                 
                 sold_items.append({
                     'item_code': item_codes[0],
@@ -125,7 +125,5 @@ class Depop:
             
             return sold_items
         except (AssertionError, IndexError):
-            # traceback.print_exc()
-            # print('Unable to parse {} item'.format(item.text))
             return []
         

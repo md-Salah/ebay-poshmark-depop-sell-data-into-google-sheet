@@ -2,7 +2,7 @@ import gspread
 import pandas as pd
 from gspread.exceptions import SpreadsheetNotFound
 from requests.exceptions import ConnectionError
-from typing import Any, Optional
+import os
 import traceback
 
 class GoogleSheet:
@@ -19,10 +19,8 @@ class GoogleSheet:
             wsh = sheets.worksheet(sheetname)
             
             return wsh.get_all_records()  
-        except SpreadsheetNotFound:
+        except (SpreadsheetNotFound, ConnectionError):
             print('SpreadsheetNotFound: {} + {}'.format(filename, sheetname))
-        except ConnectionError:
-            print('ConnectionError: {} + {}'.format(filename, sheetname))
         
         return []   
         
@@ -40,44 +38,7 @@ class GoogleSheet:
             wsh.update([df.columns.values.tolist()] + df.values.tolist())
         except SpreadsheetNotFound:
             print('Spreadsheet not found: {} + {}'.format(filename, sheetname))
-        
-    
-    def find_a_row(self, filename:str, sheetname:str, text:str, header:int=1) -> tuple[Optional[dict], Any]:
-        try:
-            sheets = self.sa.open(filename)
-            wsh = sheets.worksheet(sheetname)
-            
-            cell = wsh.find(text) 
-            if cell:
-                data = {key:value for key, value in zip(wsh.row_values(header), wsh.row_values(cell.row))}
-                return data, cell
-
-        except SpreadsheetNotFound: 
-            print('SpreadsheetNotFound: {} + {}'.format(filename, sheetname))
-        
-        return None, None
-
-    def update_a_row(self, filename:str, sheetname:str, data:dict, row:int, header:int=1):
-        '''
-        data: dict
-        row: 1-based
-        '''
-        sheets = self.sa.open(filename)
-        wsh = sheets.worksheet(sheetname)
-
-        values = [data[key] for key in wsh.row_values(header)]
-        wsh.update('A{}'.format(row), [values])
-
-
-    def update_a_cell(self, value:Any, row:int, col:int, filename:str, sheetname:str):
-        '''
-        row: 1-based
-        col: 1-based
-        '''
-        sheets = self.sa.open(filename)
-        wsh = sheets.worksheet(sheetname)
-        
-        wsh.update_cell(row, col, value)
+            os.system('pause')
         
         
     def update_sold_items(self, filename:str, sheetname:str, sold_items:list[dict]):

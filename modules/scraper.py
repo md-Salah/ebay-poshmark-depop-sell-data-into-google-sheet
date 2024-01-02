@@ -448,4 +448,5 @@ class Scraper:
 		with open(self.error_file, 'a') as file:
 			file.write('\n')
 			file.write(traceback.format_exc())
+			file.write('\n')
    
