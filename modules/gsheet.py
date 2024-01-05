@@ -49,7 +49,7 @@ class GoogleSheet:
         header = [value.strip() for value in wsh.row_values(row_number)]
         wsh.update('A{}'.format(row_number), [header])
         
-        products = wsh.get_all_records()
+        products = wsh.get_all_records(numericise_ignore=['all'])
         
         col_map = {
             'Sold Price': 'earning',

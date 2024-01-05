@@ -4,6 +4,7 @@ from typing import Optional
 from datetime import datetime
 
 from modules.scraper import Scraper
+from modules import files as fs
 
 class Poshmark:
     def __init__(self, headless:bool=False, proxy:Optional[str]=None, profile:Optional[str]='') -> None:
@@ -18,6 +19,10 @@ class Poshmark:
             
         # Setup cookies
         self.cookie_file = 'cookies/poshmark_cookies.pkl'
+        
+        # Last item
+        self.note_file = 'note/poshmark.json'
+        self.prev_item = fs.load_json(self.note_file)
         
     
     def login(self, poshmark_username, poshmark_password):    
@@ -61,10 +66,19 @@ class Poshmark:
         for i in range(15):
             orders = self.se.find_elements('a[data-et-name="order"]')
             if i < len(orders):
-                items = self.get_order_items(orders[i])   
+                items = self.get_order_items(orders[i])  
+                
+                # Check if items are already visited
+                if len(items) > 0 and items[0] == self.prev_item:
+                    break
+                 
                 sold_items.extend(items)
             else:
-                break    
+                break 
+            
+        if len(sold_items) > 0:
+            fs.dump_json(self.note_file, sold_items[0])   
+        
         return sold_items    
             
     def get_order_items(self, item):

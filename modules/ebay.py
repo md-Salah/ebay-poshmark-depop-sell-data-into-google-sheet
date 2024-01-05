@@ -4,6 +4,7 @@ from typing import Optional
 from datetime import datetime
 
 from modules.scraper import Scraper
+from modules import files as fs
 
 class Ebay:
     def __init__(self, headless=False, proxy=None, profile:Optional[str]='') -> None:
@@ -18,6 +19,10 @@ class Ebay:
             
         # Setup cookies
         self.cookie_file = 'cookies/ebay_cookies.pkl'
+        
+        # Last item
+        self.note_file = 'note/ebay.json'
+        self.prev_item = fs.load_json(self.note_file)
         
     
     def login(self, ebay_username, ebay_password):
@@ -58,9 +63,18 @@ class Ebay:
             orders = self.se.find_elements('tr[class^="order-info"]')
             if i < len(orders):
                 items = self.get_order_items(orders[i])   
+                
+                # Check if items are already visited
+                if len(items) > 0 and items[0] == self.prev_item:
+                    break
+
                 sold_items.extend(items)
             else:
                 break    
+            
+        if len(sold_items) > 0:
+            fs.dump_json(self.note_file, sold_items[0])
+
         return sold_items    
             
     def get_order_items(self, item):

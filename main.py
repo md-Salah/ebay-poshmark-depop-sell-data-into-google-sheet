@@ -15,14 +15,13 @@ def main():
     try:
         sold_items = []
         
-        # Depop
-        depop = Depop(profile=settings.profile)
-        if depop.login(settings.depop_username, settings.depop_password):
-            sold_items += depop.get_sold_items()
-            
-        input('....')
-        del depop
-        time.sleep(3)
+        # # Ebay
+        # ebay = Ebay(profile=settings.profile)
+        # if ebay.login(settings.ebay_username, settings.ebay_password):
+        #     sold_items += ebay.get_sold_items()
+        # del ebay
+        # time.sleep(3)
+        
         
         # # Poshmark
         # poshmark = Poshmark(profile=settings.profile)
@@ -31,20 +30,22 @@ def main():
         # del poshmark
         # time.sleep(3)
         
-        # # Ebay
-        # ebay = Ebay(profile=settings.profile)
-        # if ebay.login(settings.ebay_username, settings.ebay_password):
-        #     sold_items += ebay.get_sold_items()
-        # del ebay
-
+        
+        # # Depop
+        # depop = Depop(profile=settings.profile)
+        # if depop.login(settings.depop_username, settings.depop_password):
+        #     sold_items += depop.get_sold_items()
+        # del depop
+            
+        
         print('\nTotal sold items: {}'.format(len(sold_items)))
         [print('{}: {}'.format(key, value)) for key, value in Counter([item.get('platform') for item in sold_items]).items()]
         
         # Google Sheet
-        # print('\nUpdating Google Sheet...')
-        # gsheet = GoogleSheet(service_account=settings.service_account) # type: ignore
-        # gsheet.update_sold_items(filename=settings.filename, sheetname=settings.sheetname, sold_items=sold_items) # type: ignore
-        # del gsheet
+        print('\nUpdating Google Sheet...')
+        gsheet = GoogleSheet(service_account=settings.service_account) # type: ignore
+        gsheet.update_sold_items(filename=settings.filename, sheetname=settings.sheetname, sold_items=sold_items) # type: ignore
+        del gsheet
         
         print('')
         [print(item) for item in sold_items]
