@@ -16,22 +16,22 @@ def main():
     try:
         sold_items = []
 
-        # Ebay
-        ebay = Ebay(profile=settings.profile)
-        if ebay.login(settings.ebay_username, settings.ebay_password):
-            sold_items += ebay.get_sold_items()
-        del ebay
-        time.sleep(3)
+        # # Ebay
+        # ebay = Ebay(profile=settings.profile)
+        # if ebay.login(settings.ebay_username, settings.ebay_password):
+        #     sold_items += ebay.get_sold_items()
+        # del ebay
+        # time.sleep(3)
 
-        # Poshmark
-        poshmark = Poshmark(profile=settings.profile)
-        if poshmark.login(settings.poshmark_username, settings.poshmark_password):
-            sold_items += poshmark.get_sold_items()
-        del poshmark
-        time.sleep(3)
+        # # Poshmark
+        # poshmark = Poshmark(profile=settings.profile)
+        # if poshmark.login(settings.poshmark_username, settings.poshmark_password):
+        #     sold_items += poshmark.get_sold_items()
+        # del poshmark
+        # time.sleep(3)
 
         # Depop
-        depop = Depop(profile=settings.profile)
+        depop = Depop()
         if depop.login(settings.depop_username, settings.depop_password):
             sold_items += depop.get_sold_items()
         del depop

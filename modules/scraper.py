@@ -153,8 +153,8 @@ class Scraper:
 			return False
 
 		# Chcek if logged in
-		self.wait_random_time(2, 3)
-		if self.is_logged_in(is_logged_in_selector, timeout=30):
+		self.wait_random_time(6, 8)
+		if self.is_logged_in(is_logged_in_selector, timeout=25):
 			if cookie_file:
 				self.save_cookies(cookie_file)
 				print('Login success and Cookies are saved.')
