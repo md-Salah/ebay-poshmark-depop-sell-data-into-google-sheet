@@ -4,6 +4,7 @@ from gspread.exceptions import SpreadsheetNotFound
 from requests.exceptions import ConnectionError
 import os
 import traceback
+import time
 
 class GoogleSheet:
     
@@ -31,7 +32,7 @@ class GoogleSheet:
             'Sold Platform': 'platform'
         }
         
-        for item in sold_items:
+        for i, item in enumerate(sold_items):
             index = self.item_in_products(item['item_code'], products)
             if index == -1:
                 # Add new item
@@ -49,6 +50,9 @@ class GoogleSheet:
                     value = item.get(col_map[key], '')
                     wsh.update_cell(row, header.index(key)+1, value)
                 updated.append(item['item_code'])
+                
+            if i % 14 == 0:
+                time.sleep(60)
 
         print('Added: {}'.format(added))
         print('Updated: {}'.format(updated))
